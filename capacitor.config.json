@@ -1,0 +1,9 @@
+{
+  "appId": "com.calligraphy.review",
+  "appName": "书法AI评语生成器",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
