@@ -2,16 +2,13 @@
   <div class="section">
     <div class="section-title">
       {{ icon }} {{ title }}
-      <span class="count-badge">{{ selected.length }} 已选</span>
+      <span class="count-badge">{{ selectedLabels.length }} 已选</span>
     </div>
 
-    <!-- 未选班级时提示 -->
-    <div v-if="!classType" class="hint">请先选择班级类型</div>
-
-    <!-- 选项列表 -->
-    <div v-else class="option-list">
+    <!-- 预设勾选 -->
+    <div class="option-list">
       <label
-        v-for="item in filteredOptions"
+        v-for="item in presets"
         :key="item.id"
         class="option-item"
         :class="{ checked: selected.includes(item.id) }"
@@ -23,8 +20,24 @@
           class="option-checkbox"
         />
         <span class="option-label">{{ item.label }}</span>
-        <span v-if="item.classType !== 'all'" class="tag">{{ classTag(item.classType) }}</span>
       </label>
+    </div>
+
+    <!-- 已选标签预览 -->
+    <div v-if="selectedLabels.length > 0" class="selected-tags">
+      <span v-for="label in selectedLabels" :key="label" class="tag-chip">{{ label }}</span>
+    </div>
+
+    <!-- 自定义补充 -->
+    <div class="custom-row">
+      <label class="form-label">✏️ 自定义补充（可选）</label>
+      <textarea
+        :value="customText"
+        @input="$emit('update:customText', $event.target.value)"
+        class="form-textarea"
+        :placeholder="customPlaceholder"
+        rows="2"
+      ></textarea>
     </div>
   </div>
 </template>
@@ -35,34 +48,70 @@ import { computed } from 'vue';
 const props = defineProps({
   icon: { type: String, default: '✅' },
   title: { type: String, default: '选项' },
-  options: { type: Array, required: true },
+  presets: { type: Array, required: true },
   selected: { type: Array, required: true },
-  classType: { type: String, default: '' },
+  customText: { type: String, default: '' },
 });
 
-defineEmits(['toggle']);
+defineEmits(['toggle', 'update:customText']);
 
-const filteredOptions = computed(() => {
-  if (!props.classType) return [];
-  return props.options.filter(
-    o => o.classType === 'all' || o.classType === props.classType
-  );
+const customPlaceholder = computed(() => {
+  return props.title.includes('优点')
+    ? '例如：今天写"永"字特别好、主动帮同学...'
+    : '例如：最后10分钟有点坐不住了...';
 });
 
-function classTag(type) {
-  const map = { toddler: '幼儿', hardpen: '硬笔', softpen: '软笔' };
-  return map[type] || type;
-}
+const selectedLabels = computed(() => {
+  return props.selected.map(id => {
+    const item = props.presets.find(p => p.id === id);
+    return item ? item.label : '';
+  }).filter(Boolean);
+});
 </script>
 
 <style scoped>
-.tag {
-  font-size: 10px;
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+.tag-chip {
+  font-size: 11px;
   background: #ebf4ff;
   color: #4299e1;
-  padding: 1px 6px;
-  border-radius: 3px;
-  margin-left: 4px;
-  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.custom-row {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 4px;
+}
+.form-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #2d3748;
+  background: #fff;
+  resize: vertical;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 </style>
