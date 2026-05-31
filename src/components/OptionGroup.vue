@@ -2,25 +2,28 @@
   <div class="section">
     <div class="section-title">
       {{ icon }} {{ title }}
-      <span class="count-badge">{{ selectedLabels.length }} 已选</span>
+      <span class="count-badge">{{ totalSelected }} 已选</span>
     </div>
 
-    <!-- 预设勾选 -->
-    <div class="option-list">
-      <label
-        v-for="item in presets"
-        :key="item.id"
-        class="option-item"
-        :class="{ checked: selected.includes(item.id) }"
-      >
-        <input
-          type="checkbox"
-          :checked="selected.includes(item.id)"
-          @change="$emit('toggle', item.id)"
-          class="option-checkbox"
-        />
-        <span class="option-label">{{ item.label }}</span>
-      </label>
+    <!-- 分组显示 -->
+    <div v-for="group in groupedOptions" :key="group.category" class="option-group">
+      <div class="group-label">{{ group.label }}</div>
+      <div class="option-list">
+        <label
+          v-for="item in group.items"
+          :key="item.id"
+          class="option-item"
+          :class="{ checked: selected.includes(item.id) }"
+        >
+          <input
+            type="checkbox"
+            :checked="selected.includes(item.id)"
+            @change="$emit('toggle', item.id)"
+            class="option-checkbox"
+          />
+          <span class="option-label">{{ item.label }}</span>
+        </label>
+      </div>
     </div>
 
     <!-- 已选标签预览 -->
@@ -35,7 +38,7 @@
         :value="customText"
         @input="$emit('update:customText', $event.target.value)"
         class="form-textarea"
-        :placeholder="customPlaceholder"
+        :placeholder="placeholder"
         rows="2"
       ></textarea>
     </div>
@@ -55,21 +58,44 @@ const props = defineProps({
 
 defineEmits(['toggle', 'update:customText']);
 
-const customPlaceholder = computed(() => {
-  return props.title.includes('优点')
+const placeholder = computed(() =>
+  props.title.includes('优点')
     ? '例如：今天写"永"字特别好、主动帮同学...'
-    : '例如：最后10分钟有点坐不住了...';
+    : '例如：最后10分钟有点坐不住了...'
+);
+
+// 按 category 分组
+const groupedOptions = computed(() => {
+  const generalItems = props.presets.filter(p => p.category === 'general');
+  const calligraphyItems = props.presets.filter(p => p.category === 'calligraphy');
+  return [
+    { category: 'general', label: '📌 通用基础类', items: generalItems },
+    { category: 'calligraphy', label: '🖊 书法专业类', items: calligraphyItems },
+  ];
 });
 
-const selectedLabels = computed(() => {
-  return props.selected.map(id => {
+const totalSelected = computed(() => props.selected.length);
+
+const selectedLabels = computed(() =>
+  props.selected.map(id => {
     const item = props.presets.find(p => p.id === id);
     return item ? item.label : '';
-  }).filter(Boolean);
-});
+  }).filter(Boolean)
+);
 </script>
 
 <style scoped>
+.option-group {
+  margin-bottom: 8px;
+}
+.group-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #667eea;
+  padding: 4px 0;
+  border-bottom: 1px solid #ebf4ff;
+  margin-bottom: 6px;
+}
 .selected-tags {
   display: flex;
   flex-wrap: wrap;
@@ -84,7 +110,6 @@ const selectedLabels = computed(() => {
   padding: 2px 8px;
   border-radius: 10px;
 }
-
 .custom-row {
   margin-top: 10px;
   padding-top: 10px;
